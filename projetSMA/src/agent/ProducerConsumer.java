@@ -9,6 +9,9 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
+/**
+ * Producer and Consumer Agent
+ */
 public class ProducerConsumer extends Agent {
     private final long startTime =  System.currentTimeMillis()/1000;
 
@@ -25,14 +28,16 @@ public class ProducerConsumer extends Agent {
     private int consumptionSpeed;
     private int currentProducedProductStock = 0;
     private int currentConsumedProductStock = 0;
-    private int maxProducedStock = 10;
-    private int maxConsumedStock = 10;
+    private final int maxProducedStock = 10;
+    private final int maxConsumedStock = 10;
 
     private double money = 100.0;
     private double currentProducedProductPrice = 1.0;
 
+    /**
+     * Initialize variables and set behaviours
+     */
     protected void setup() {
-        // Get arguments
         Object[] args = getArguments();
         if (args != null && args.length != 0) {
             try {
@@ -46,8 +51,13 @@ public class ProducerConsumer extends Agent {
         }
         System.out.println("\tDEBUG: setup - " + this.getLocalName() + " params: " + producedProduct + "/" + consumedProduct + "/" + productionSpeed + "/" + consumptionSpeed);
 
-        // Call For Proposal Buy Behaviour
         addBehaviour(new CyclicBehaviour(this) {
+            /**
+             * Behaviour to handle buying - Call For Proposal
+             *
+             * Get all agents.
+             * Send call for proposal message if there is still money and space in the stock.
+             */
             @Override
             public void action() {
                 if (agentsList == null) {
@@ -78,8 +88,13 @@ public class ProducerConsumer extends Agent {
             }
         });
 
-        // Accept or Reject Proposal Buy Behaviour
         addBehaviour(new CyclicBehaviour(this) {
+            /**
+             * Behaviour to handle buying - Accept or Reject Proposal
+             *
+             * Send the accept proposal or reject proposal message on receipt of the propose message.
+             * TODO
+             */
             @Override
             public void action() {
                 MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
@@ -115,8 +130,13 @@ public class ProducerConsumer extends Agent {
             }
         });
 
-        // Propose Sell Behaviour
         addBehaviour(new CyclicBehaviour(this) {
+            /**
+             * Behaviour to handle selling - Propose
+             *
+             * Send the propose message on receipt of the call for proposal message, if the require product if the produced product.
+             * Manage pricing changes according to money and satisfaction.
+             */
             @Override
             public void action() {
                 if (satisfaction <= 0.5 && money <= 0) {
@@ -139,8 +159,12 @@ public class ProducerConsumer extends Agent {
             }
         });
 
-        // Confirm Sell Behaviour
         addBehaviour(new CyclicBehaviour(this) {
+            /**
+             * Behaviour to handle selling - Confirm
+             *
+             * Send the confirm message on receipt of the accept proposal message.
+             */
             @Override
             public void action() {
                 MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
@@ -161,8 +185,13 @@ public class ProducerConsumer extends Agent {
             }
         });
 
-        // Consume Behaviour
         addBehaviour(new CyclicBehaviour(this) {
+            /**
+             * Behaviour to handle consumption
+             *
+             * Consume the product if there still stock.
+             * Manage satisfaction according to the stock.
+             */
             @Override
             public void action() {
                 if (currentConsumedProductStock > 0) {
@@ -189,8 +218,12 @@ public class ProducerConsumer extends Agent {
             }
         });
 
-        // Produce Behaviour
         addBehaviour(new CyclicBehaviour(this) {
+            /**
+             * Behaviour to handle production
+             *
+             * Produce the product if there is still place in the stock.
+             */
             @Override
             public void action() {
                 if (maxProducedStock == currentProducedProductStock) {
@@ -205,9 +238,12 @@ public class ProducerConsumer extends Agent {
             }
         });
 
-
-        // End Simulation Behaviour
         addBehaviour(new CyclicBehaviour(this) {
+            /**
+             * Behaviour to handle end of simulation and die
+             *
+             * Died if satisfaction is under 0.2 or if it receives end simulation message.
+             */
             @Override
             public void action() {
                 if (satisfaction < 0.2) {
@@ -224,6 +260,9 @@ public class ProducerConsumer extends Agent {
         });
     }
 
+    /**
+     * Method called when Agent is killed to print information
+     */
     @Override
     protected void takeDown() {
         System.out.println("I'm Agent: " + this.getLocalName());

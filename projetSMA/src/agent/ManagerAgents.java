@@ -1,6 +1,3 @@
-/*
- * ManagerAgents parameters : 3,abc,bca,20
- */
 package agent;
 
 import java.util.ArrayList;
@@ -11,6 +8,11 @@ import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
 import behaviour.*;
 
+/**
+ * Manager Agent of Producer and Consumer
+ *
+ * Parameters: 3,abc,bca,20
+ */
 public class ManagerAgents extends Agent {
 	private int agentsCount = 3;
 	private String agentsProducedProducts = "ABC";
@@ -19,6 +21,9 @@ public class ManagerAgents extends Agent {
 
 	ArrayList<AgentController> agents = new ArrayList<>();
 
+	/**
+	 * Initialize variables, create Agents and set behaviour
+	 */
 	protected void setup() {
 		Object[] args = getArguments();
 		if (args != null) {
@@ -61,6 +66,9 @@ public class ManagerAgents extends Agent {
 		addBehaviour(new StopBehaviour(this, simulationDuration));
 	}
 
+	/**
+	 * Start all Agents
+	 */
 	private void startAllAgents() {
 		System.out.println("Start agents");
 		for (AgentController agent : agents) {
@@ -72,6 +80,9 @@ public class ManagerAgents extends Agent {
 		}
 	}
 
+	/**
+	 * Print simulation's arguments
+	 */
 	private void printArguments() {
 		System.out.println("Agents' count: " + agentsCount);
 		System.out.println("Agents' produced product: " + agentsProducedProducts);
