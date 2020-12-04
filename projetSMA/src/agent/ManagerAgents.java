@@ -1,4 +1,4 @@
-package project;
+package agent;
 
 public class ManagerAgents {
 }
