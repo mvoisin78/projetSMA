@@ -42,8 +42,8 @@ public class ManagerAgents extends Agent {
 				Object[] agentsArgs = new Object[4];
 				agentsArgs[0] = agentsProducedProducts.charAt(index);
 				agentsArgs[1] = agentsConsumedProducts.charAt(index);
-				agentsArgs[2] = r.nextInt(6) + 5;
-				agentsArgs[3] = r.nextInt(6) + 5;
+				agentsArgs[2] = r.nextInt(4) + 1;
+				agentsArgs[3] = r.nextInt(4) + 1;
 				name = agentsArgs[0].toString() + index;
 
 				try {

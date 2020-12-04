@@ -18,7 +18,7 @@ public class StopBehaviour extends SimpleBehaviour {
 
 	public void action() {
 		try {
-			Thread.sleep(10);
+			Thread.sleep(1);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
