@@ -39,7 +39,7 @@ public class StopBehaviour extends SimpleBehaviour {
 
 			for (AMSAgentDescription agent : agents) {
 				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-				msg.setContent(" PING ");
+				msg.setContent("STOP");
 				if (!agent.getName().equals(a.getAID())) {
 					msg.addReceiver(agent.getName());
 					a.send(msg);
