@@ -29,7 +29,6 @@ public class ProducerConsumer extends Agent {
     private double money;
     private double currentProducedProductPrice;
 
-
     protected void setup() {
         System.out.println("\tDEBUG: setup - " + this.getLocalName());
 

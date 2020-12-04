@@ -5,7 +5,6 @@ package agent;
 
 import java.util.ArrayList;
 import java.util.Random;
-
 import jade.core.Agent;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
@@ -13,35 +12,36 @@ import jade.wrapper.StaleProxyException;
 import behaviour.*;
 
 public class ManagerAgents extends Agent {
+	private int agentsCount = 3;
+	private String agentsProducedProducts = "ABC";
+	private String agentsConsumedProducts = "BCA";
+	private int simulationDuration = 100;
+
+	ArrayList<AgentController> agents = new ArrayList<>();
+
 	protected void setup() {
 		Object[] args = getArguments();
-
-		int agentsCount = 3;
-		String agentsProducedProduct = "ABC";
-		String agentsConsumedProduct = "BCA";
-		int simulationDuration = 100;
-
 		if (args != null) {
 			if (args.length == 4) {
 				agentsCount = Integer.parseInt(args[0].toString());
-				agentsProducedProduct = args[1].toString();
-				agentsConsumedProduct = args[2].toString();
+				agentsProducedProducts = args[1].toString();
+				agentsConsumedProducts = args[2].toString();
 				simulationDuration = Integer.parseInt(args[3].toString());
 			} else {
-				System.err.println("Missing arguments");
+				System.err.println("Missing arguments, needed: agentsCount agentsProducedProducts agentsConsumedProducts simulationDuration.");
 			}
 		}
-		printArguments(agentsCount, agentsProducedProduct, agentsConsumedProduct, simulationDuration);
+		printArguments();
 
-		if (agentsCount == agentsProducedProduct.length() && agentsCount == agentsConsumedProduct.length()) {
+		if (agentsCount == agentsProducedProducts.length() && agentsCount == agentsConsumedProducts.length()) {
 			AgentContainer c = getContainerController();
 			Random r = new Random();
 			String name;
-			ArrayList<AgentController> agents = new ArrayList<>();
+
 			for (int index = 0; index < agentsCount; index++) {
 				Object[] agentsArgs = new Object[4];
-				agentsArgs[0] = agentsProducedProduct.charAt(index);
-				agentsArgs[1] = agentsConsumedProduct.charAt(index);
+				agentsArgs[0] = agentsProducedProducts.charAt(index);
+				agentsArgs[1] = agentsConsumedProducts.charAt(index);
 				agentsArgs[2] = r.nextInt(6) + 5;
 				agentsArgs[3] = r.nextInt(6) + 5;
 				name = agentsArgs[0].toString() + index;
@@ -53,8 +53,7 @@ public class ManagerAgents extends Agent {
 					e.printStackTrace();
 				}
 			}
-			startAll(agents);
-
+			startAllAgents();
 		} else {
 			System.err.println("Invalid parameters' count");
 		}
@@ -62,7 +61,7 @@ public class ManagerAgents extends Agent {
 		addBehaviour(new StopBehaviour(this, simulationDuration));
 	}
 
-	void startAll(ArrayList<AgentController> agents) {
+	private void startAllAgents() {
 		System.out.println("Start agents");
 		for (AgentController agent : agents) {
 			try {
@@ -73,10 +72,10 @@ public class ManagerAgents extends Agent {
 		}
 	}
 
-	void printArguments(int agentsCount, String agentsProducedProduct, String agentsConsumedProduct, int simulationDuration) {
+	private void printArguments() {
 		System.out.println("Agents' count: " + agentsCount);
-		System.out.println("Agents' produced product: " + agentsProducedProduct);
-		System.out.println("Agents' consumed product: " + agentsConsumedProduct);
+		System.out.println("Agents' produced product: " + agentsProducedProducts);
+		System.out.println("Agents' consumed product: " + agentsConsumedProducts);
 		System.out.println("Simulation duration: " + simulationDuration);
 	}
 }

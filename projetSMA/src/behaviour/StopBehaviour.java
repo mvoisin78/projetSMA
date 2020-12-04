@@ -11,8 +11,8 @@ import jade.lang.acl.ACLMessage;
 public class StopBehaviour extends SimpleBehaviour {
 	protected int duration;
 
-	public StopBehaviour(Agent a, int simulationDuration) {
-		super(a);
+	public StopBehaviour(Agent agent, int simulationDuration) {
+		super(agent);
 		duration = simulationDuration;
 	}
 
