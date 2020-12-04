@@ -163,6 +163,7 @@ public class ProducerConsumer extends Agent {
                     satisfaction = Math.exp(-0.1*averageSatisfactionCount);
                     averageSatisfaction += satisfaction;
                     satisfactionCount++;
+                    averageSatisfactionCount++;
                 }
             }
         });
