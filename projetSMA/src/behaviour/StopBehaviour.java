@@ -9,43 +9,41 @@ import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 
 public class StopBehaviour extends SimpleBehaviour {
-
 	protected int duration;
-	Agent a;
 
-	public StopBehaviour(Agent a, int simuDuration) {
-		this.a = a;
-		duration = simuDuration;
+	public StopBehaviour(Agent a, int simulationDuration) {
+		super(a);
+		duration = simulationDuration;
 	}
 
 	public void action() {
 		try {
 			Thread.sleep(10);
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 		--duration;
-		System.out.println(duration);
+		System.out.println("Duration=" + duration);
 		if (duration == 0) {
 			AMSAgentDescription[] agents = null;
 			try {
 				SearchConstraints c = new SearchConstraints();
-				c.setMaxResults(new Long(-1));
-				agents = AMSService.search(a, new AMSAgentDescription(), c);
+				c.setMaxResults((long) -1);
+				agents = AMSService.search(myAgent, new AMSAgentDescription(), c);
 			} catch (FIPAException e) {
 				e.printStackTrace();
 			}
 
-			for (AMSAgentDescription agent : agents) {
+			if (agents != null) {
 				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-				msg.setContent("STOP");
-				if (!agent.getName().equals(a.getAID())) {
-					msg.addReceiver(agent.getName());
-					a.send(msg);
+				for (AMSAgentDescription agent : agents) {
+					if (!myAgent.getAID().getName().equalsIgnoreCase(agent.getName().getName())) {
+						msg.addReceiver(agent.getName());
+					}
 				}
+				myAgent.send(msg);
+				System.out.println("End Simulation");
 			}
-			System.out.println("fin de la simu");
 		}
 	}
 
@@ -53,5 +51,4 @@ public class StopBehaviour extends SimpleBehaviour {
 	public boolean done() {
 		return duration == 0;
 	}
-
 }

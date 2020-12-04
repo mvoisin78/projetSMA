@@ -46,7 +46,7 @@ public class ProducerConsumer extends Agent {
                 this.productionSpeed = Integer.parseInt(args[2].toString());
                 this.consumptionSpeed = Integer.parseInt(args[3].toString());
             } catch (Exception e) {
-                e.getStackTrace();
+                e.printStackTrace();
             }
         }
         System.out.println("\tDEBUG: setup - " + this.getLocalName() + " params: " + producedProduct + "/" + consumedProduct + "/" + productionSpeed + "/" + consumptionSpeed);
