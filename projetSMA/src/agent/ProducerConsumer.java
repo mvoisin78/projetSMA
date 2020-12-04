@@ -16,6 +16,8 @@ public class ProducerConsumer extends Agent {
 
     private double satisfaction;
     private double averageSatisfaction;
+    private int satisfactionCount;
+    private int averageSatisfactionCount;
 
     private String producedProduct;
     private String consumedProduct;
@@ -31,6 +33,9 @@ public class ProducerConsumer extends Agent {
 
     protected void setup() {
         this.satisfaction = 1.0;
+        this.averageSatisfaction = 1.0;
+        this.satisfactionCount = 1;
+        this.averageSatisfactionCount = 1;
         this.currentProducedProductPrice = 1.0;
         this.money = 100.0;
 
@@ -143,7 +148,9 @@ public class ProducerConsumer extends Agent {
                     if (satisfaction != 1) {
                         System.out.println("\tDEBUG: Consume - " + myAgent.getLocalName() + " satisfaction=1");
                         satisfaction = 1;
-                        //TODO averageSatisfaction
+                        averageSatisfaction += satisfaction;
+                        satisfactionCount++;
+                        averageSatisfactionCount = 1;
                     }
 
                     if (((System.currentTimeMillis()/1000) - startTime) % consumptionSpeed == 0) {
@@ -153,8 +160,9 @@ public class ProducerConsumer extends Agent {
                 }
                 if (currentConsumedProductStock <= 0) {
                     System.out.println("\tDEBUG: Consume - " + myAgent.getLocalName() + " satisfaction decrease");
-                    //TODO satisfaction = ; exp(-lambda*t)
-                    //TODO averageSatisfaction
+                    satisfaction = Math.exp(-0.1*averageSatisfactionCount);
+                    averageSatisfaction += satisfaction;
+                    satisfactionCount++;
                 }
             }
         });
@@ -193,6 +201,6 @@ public class ProducerConsumer extends Agent {
     @Override
     protected void takeDown() {
         System.out.println("I'm Agent: " + this.getLocalName());
-        System.out.println("Average Satisfaction: " + this.averageSatisfaction);
+        System.out.println("Average Satisfaction: " + this.averageSatisfaction/this.satisfactionCount);
     }
 }
