@@ -68,7 +68,7 @@ public class ProducerConsumer extends Agent {
                     }
                 }
 
-                if (money <= 0) {
+                if (money <= 0 || maxConsumedStock == currentConsumedProductStock) {
                     System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " money=0");
                     block();
                 } else {
@@ -89,13 +89,35 @@ public class ProducerConsumer extends Agent {
         addBehaviour(new CyclicBehaviour(this) {
             @Override
             public void action() {
-                //ACCEPT_PROPOSAL(quantité)
-                //REJECT_PROPOSAL, trouvé moins cher ailleurs
                 MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
                 ACLMessage msg = receive(messageType);
                 if (msg != null) {
-                    System.out.println("\tDEBUG: Accept or Reject - " + myAgent.getLocalName());
-                    //TODO
+                    String content = msg.getContent();
+                    String[] contentArray = content.split(" ");
+                    int quantity = Integer.parseInt(contentArray[1]);
+                    double price = Double.parseDouble(contentArray[2]);
+                    double totalPrice = price*quantity;
+
+                    if (quantity >= maxConsumedStock - currentConsumedProductStock) {
+                        quantity = maxConsumedStock - currentConsumedProductStock;
+                        totalPrice = price*quantity;
+                    }
+
+                    if (money < totalPrice || maxConsumedStock == currentConsumedProductStock) {
+                        System.out.println("\tDEBUG: Reject - " + myAgent.getLocalName());
+                        ACLMessage reply = msg.createReply();
+                        reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
+                        send(reply);
+                    } else {
+                        System.out.println("\tDEBUG: Accept - " + myAgent.getLocalName());
+                        ACLMessage reply = msg.createReply();
+                        reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                        reply.setContent(String.valueOf(quantity));
+                        send(reply);
+
+                        money -= totalPrice;
+                        currentConsumedProductStock += quantity;
+                    }
                 }
             }
         });
@@ -132,10 +154,16 @@ public class ProducerConsumer extends Agent {
                 ACLMessage msg = receive(messageType);
                 if (msg != null) {
                     System.out.println("\tDEBUG: Sell - " + myAgent.getLocalName() + " send CONFIRM");
-                    //TODO transferer marchandise + money
+
+                    String content = msg.getContent();
+                    int quantity = Integer.parseInt(content);
+
                     ACLMessage reply = msg.createReply();
                     reply.setPerformative(ACLMessage.CONFIRM);
                     send(reply);
+
+                    currentProducedProductStock -= quantity;
+                    money += quantity*currentProducedProductPrice;
                 }
             }
         });
