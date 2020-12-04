@@ -106,12 +106,12 @@ public class ProducerConsumer extends Agent {
                     }
 
                     if (money < totalPrice || maxConsumedStock == currentConsumedProductStock) {
-                        System.out.println("\tDEBUG: Reject - " + myAgent.getLocalName());
+                        System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send REJECT");
                         ACLMessage reply = msg.createReply();
                         reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
                         send(reply);
                     } else {
-                        System.out.println("\tDEBUG: Accept - " + myAgent.getLocalName());
+                        System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send ACCEPT");
                         ACLMessage reply = msg.createReply();
                         reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                         reply.setContent(String.valueOf(quantity));
