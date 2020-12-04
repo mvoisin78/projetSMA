@@ -1,6 +1,6 @@
 /**
  *
- * Param�tres de cr�ation du ManagerAgents : 3,abc,bca,20
+ * Parametres de creation du ManagerAgents : 3,abc,bca,20
  *
  */
 package agent;
@@ -19,6 +19,7 @@ import jade.lang.acl.ACLMessage;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
+import behaviour.*;
 
 public class ManagerAgents extends Agent {
 
@@ -64,9 +65,9 @@ public class ManagerAgents extends Agent {
 				System.out.println(name);
 
 				try {
-					// AgentController ac = c.createNewAgent(name, "project.ProducerConsumer",
-					// agentsArgs);
-					// agents.add(ac);
+					AgentController ac = c.createNewAgent(name, "agent.ProducerConsumer",
+					agentsArgs);
+					agents.add(ac);
 				} catch (Exception e) {
 					// TODO: handle exception
 				}
@@ -77,7 +78,7 @@ public class ManagerAgents extends Agent {
 			System.out.println("Param�tres non valides, merci de r��sayer");
 		}
 
-		addBehaviour(new StopBehavior(this, simuDuration));
+		addBehaviour(new StopBehaviour(this, simuDuration));
 
 	}
 
@@ -97,54 +98,6 @@ public class ManagerAgents extends Agent {
 		System.out.println("Type des agents :" + agentsType);
 		System.out.println("Consomation des agents :" + agentsCons);
 		System.out.println("Dur�e de la simulation : " + simuDuration + " unit�es de temps");
-	}
-
-}
-
-class StopBehavior extends SimpleBehaviour {
-
-	protected int duration;
-	Agent a;
-
-	public StopBehavior(Agent a, int simuDuration) {
-		this.a = a;
-		duration = simuDuration;
-	}
-
-	public void action() {
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		--duration;
-		System.out.println(duration);
-		if (duration == 0) {
-			AMSAgentDescription[] agents = null;
-			try {
-				SearchConstraints c = new SearchConstraints();
-				c.setMaxResults(new Long(-1));
-				agents = AMSService.search(a, new AMSAgentDescription(), c);
-			} catch (FIPAException e) {
-				e.printStackTrace();
-			}
-
-			for (AMSAgentDescription agent : agents) {
-				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-				msg.setContent(" PING ");
-				if (!agent.getName().equals(a.getAID())) {
-					msg.addReceiver(agent.getName());
-					a.send(msg);
-				}
-			}
-			System.out.println("fin de la simu");
-		}
-	}
-
-	@Override
-	public boolean done() {
-		return duration == 0;
 	}
 
 }
