@@ -14,33 +14,24 @@ public class ProducerConsumer extends Agent {
 
     private AMSAgentDescription[] agentsList = null;
 
-    private double satisfaction;
-    private double averageSatisfaction;
-    private int satisfactionCount;
-    private int averageSatisfactionCount;
+    private double satisfaction = 1.0;
+    private double averageSatisfaction = 1.0;
+    private int satisfactionCount = 1;
+    private int averageSatisfactionCount = 1;
 
     private String producedProduct;
     private String consumedProduct;
     private int productionSpeed;
     private int consumptionSpeed;
-    private int currentProducedProductStock;
-    private int currentConsumedProductStock;
-    private int maxProducedStock;
-    private int maxConsumedStock;
+    private int currentProducedProductStock = 0;
+    private int currentConsumedProductStock = 0;
+    private int maxProducedStock = 10;
+    private int maxConsumedStock = 10;
 
-    private double money;
-    private double currentProducedProductPrice;
+    private double money = 100.0;
+    private double currentProducedProductPrice = 1.0;
 
     protected void setup() {
-        this.satisfaction = 1.0;
-        this.averageSatisfaction = 1.0;
-        this.satisfactionCount = 1;
-        this.averageSatisfactionCount = 1;
-        this.currentProducedProductPrice = 1.0;
-        this.money = 100.0;
-        this.maxProducedStock = 10;
-        this.maxConsumedStock = 10;
-
         // Get arguments
         Object[] args = getArguments();
         if (args != null && args.length != 0) {
