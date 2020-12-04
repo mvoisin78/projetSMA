@@ -38,6 +38,8 @@ public class ProducerConsumer extends Agent {
         this.averageSatisfactionCount = 1;
         this.currentProducedProductPrice = 1.0;
         this.money = 100.0;
+        this.maxProducedStock = 10;
+        this.maxConsumedStock = 10;
 
         // Get arguments
         Object[] args = getArguments();
@@ -69,7 +71,7 @@ public class ProducerConsumer extends Agent {
                 }
 
                 if (money <= 0 || maxConsumedStock == currentConsumedProductStock) {
-                    System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " money=0");
+                    System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " money=0 or maxStock");
                     block();
                 } else {
                     System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send CFP");
@@ -217,6 +219,10 @@ public class ProducerConsumer extends Agent {
         addBehaviour(new CyclicBehaviour(this) {
             @Override
             public void action() {
+                if (satisfaction < 0.2) {
+                    System.out.println("\tDEBUG: Died Satisfaction - " + myAgent.getLocalName());
+                    doDelete();
+                }
                 MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
                 ACLMessage msg = receive(messageType);
                 if (msg != null) {
