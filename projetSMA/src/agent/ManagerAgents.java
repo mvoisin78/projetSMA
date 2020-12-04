@@ -74,9 +74,9 @@ public class ManagerAgents extends Agent {
 	}
 
 	void printArguments(int agentsCount, String agentsProducedProduct, String agentsConsumedProduct, int simulationDuration) {
-		System.out.println("Agents' count : " + agentsCount);
-		System.out.println("Agents' produced product :" + agentsProducedProduct);
-		System.out.println("Agents' consumed product :" + agentsConsumedProduct);
-		System.out.println("Simulation duration : " + simulationDuration + " unit�es de temps");
+		System.out.println("Agents' count: " + agentsCount);
+		System.out.println("Agents' produced product: " + agentsProducedProduct);
+		System.out.println("Agents' consumed product: " + agentsConsumedProduct);
+		System.out.println("Simulation duration: " + simulationDuration);
 	}
 }

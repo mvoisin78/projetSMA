@@ -187,7 +187,7 @@ public class ProducerConsumer extends Agent {
                 ACLMessage msg = receive(messageType);
                 if (msg != null) {
                     System.out.println("\tDEBUG: End simulation - " + myAgent.getLocalName());
-                    takeDown();
+                    doDelete();
                 }
             }
         });
@@ -195,9 +195,7 @@ public class ProducerConsumer extends Agent {
 
     @Override
     protected void takeDown() {
-        super.takeDown();
-
         System.out.println("I'm Agent: " + this.getLocalName());
-        System.out.println("Average Satisfaction" + this.averageSatisfaction);
+        System.out.println("Average Satisfaction: " + this.averageSatisfaction);
     }
 }
