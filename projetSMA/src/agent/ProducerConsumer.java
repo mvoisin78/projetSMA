@@ -30,8 +30,6 @@ public class ProducerConsumer extends Agent {
     private double currentProducedProductPrice;
 
     protected void setup() {
-        System.out.println("\tDEBUG: setup - " + this.getLocalName());
-
         this.satisfaction = 1.0;
         this.currentProducedProductPrice = 1.0;
         this.money = 100.0;
@@ -102,10 +100,10 @@ public class ProducerConsumer extends Agent {
             @Override
             public void action() {
                 if (satisfaction <= 0.5 && money <= 0) {
-                    System.out.println("\tDEBUG: Sell - " + myAgent.getLocalName() + " increase price");
+                    System.out.println("\tDEBUG: Sell - " + myAgent.getLocalName() + " decrease price");
                     currentProducedProductPrice -= 0.1;
                 } else if (satisfaction > 0.5 && money > 0) {
-                    System.out.println("\tDEBUG: Sell - " + myAgent.getLocalName() + " decrease price");
+                    System.out.println("\tDEBUG: Sell - " + myAgent.getLocalName() + " increase price");
                     currentProducedProductPrice += 0.1;
                 }
 
