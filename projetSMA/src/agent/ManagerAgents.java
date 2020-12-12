@@ -3,6 +3,11 @@ package agent;
 import java.util.ArrayList;
 import java.util.Random;
 import jade.core.Agent;
+import jade.domain.AMSService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
+import jade.lang.acl.ACLMessage;
 import jade.wrapper.AgentContainer;
 import jade.wrapper.AgentController;
 import jade.wrapper.StaleProxyException;
@@ -47,8 +52,8 @@ public class ManagerAgents extends Agent {
 				Object[] agentsArgs = new Object[4];
 				agentsArgs[0] = agentsProducedProducts.charAt(index);
 				agentsArgs[1] = agentsConsumedProducts.charAt(index);
-				agentsArgs[2] = r.nextInt(4) + 1;
-				agentsArgs[3] = r.nextInt(4) + 1;
+				agentsArgs[2] = r.nextInt(4) + 2;
+				agentsArgs[3] = r.nextInt(4) + 2;
 				name = agentsArgs[0].toString() + index;
 
 				try {
@@ -77,6 +82,24 @@ public class ManagerAgents extends Agent {
 			} catch (StaleProxyException e) {
 				e.printStackTrace();
 			}
+		}
+		AMSAgentDescription[] agents = null;
+		try {
+			SearchConstraints c = new SearchConstraints();
+			c.setMaxResults((long) -1);
+			agents = AMSService.search(this, new AMSAgentDescription(), c);
+		} catch (FIPAException e) {
+			e.printStackTrace();
+		}
+
+		if (agents != null) {
+			ACLMessage msg = new ACLMessage(ACLMessage.SUBSCRIBE);
+			for (AMSAgentDescription agent : agents) {
+				if (!getAID().getName().equalsIgnoreCase(agent.getName().getName())) {
+					msg.addReceiver(agent.getName());
+				}
+			}
+			send(msg);
 		}
 	}
 

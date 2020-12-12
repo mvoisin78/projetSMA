@@ -1,10 +1,18 @@
 package agent;
 
+import java.util.ArrayList;
+
+import javax.sql.rowset.serial.SerialStruct;
+
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.AMSService;
+import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -31,8 +39,14 @@ public class ProducerConsumer extends Agent {
     private final int maxProducedStock = 10;
     private final int maxConsumedStock = 10;
 
+    private int countMessage = 0;
+    private int nbAgent = 0;
+    ArrayList<ACLMessage> messageList = new ArrayList<>();
+    
     private double money = 100.0;
     private double currentProducedProductPrice = 1.0;
+    
+    AID agents[];
 
     /**
      * Initialize variables and set behaviours
@@ -51,6 +65,50 @@ public class ProducerConsumer extends Agent {
         }
         System.out.println("\tDEBUG: setup - " + this.getLocalName() + " params: " + producedProduct + "/" + consumedProduct + "/" + productionSpeed + "/" + consumptionSpeed);
 
+        
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.setName(getAID());
+        
+        ServiceDescription sd = new ServiceDescription();
+        sd.setType(producedProduct);
+        sd.setName(getLocalName());
+        dfd.addServices(sd);
+        try {
+        	DFService.register(this,dfd);
+        }catch(FIPAException fe) {
+        	fe.printStackTrace();
+        }
+        
+        addBehaviour(new CyclicBehaviour(this) {
+            /**
+             * Behaviour to search agents
+             *
+             * Put all agents who sends the good product in a list
+             */
+            @Override
+            public void action() {
+            	MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE);
+                ACLMessage msg = receive(messageType);
+	            if (msg != null) {
+	                DFAgentDescription template = new DFAgentDescription();
+	                ServiceDescription sd = new ServiceDescription();
+	                sd.setType(consumedProduct);
+	                template.addServices(sd);
+	                try {
+	                	DFAgentDescription[] result = DFService.search(myAgent, template);
+	                	agents = new AID[result.length];
+	                	for(int i=0; i<result.length; i++) {
+	                		agents[i] = result[i].getName();
+	                	}
+	                } catch(FIPAException fe) {
+	                	fe.printStackTrace();
+	                }
+	                nbAgent = agents.length;
+	                System.err.println("RECHERCHE EFFECTUEE " + nbAgent);
+	            }
+            }
+        });
+        
         addBehaviour(new CyclicBehaviour(this) {
             /**
              * Behaviour to handle buying - Call For Proposal
@@ -60,31 +118,20 @@ public class ProducerConsumer extends Agent {
              */
             @Override
             public void action() {
-                if (agentsList == null) {
-                    SearchConstraints sc = new SearchConstraints();
-                    sc.setMaxResults((long) -1);
-                    try {
-                        agentsList = AMSService.search(myAgent, new AMSAgentDescription(), sc);
-                        System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " set agentList");
-                    } catch (FIPAException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                if (money <= 0 || maxConsumedStock == currentConsumedProductStock) {
-                    System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " money=0 or maxStock");
-                    block();
-                } else {
-                    System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send CFP");
-                    ACLMessage msg = new ACLMessage(ACLMessage.CFP);
-                    msg.setContent(consumedProduct);
-                    for (AMSAgentDescription current : agentsList) {
-                        if (!myAgent.getAID().getName().equalsIgnoreCase(current.getName().getName())) {
-                            msg.addReceiver(current.getName());
-                        }
-                    }
-                    send(msg);
-                }
+               if(agents != null) {
+	                if (money <= 0 || maxConsumedStock == currentConsumedProductStock) {
+	                    System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " money=0 or maxStock");
+	                    block();
+	                } else {
+	                    System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send CFP");
+	                    ACLMessage msg = new ACLMessage(ACLMessage.CFP);
+	                    msg.setContent(consumedProduct);
+	                    for (AID agent : agents) {
+	                    	msg.addReceiver(agent);
+	                    }
+	                    send(msg);
+	                }
+               }
             }
         });
 
@@ -100,32 +147,57 @@ public class ProducerConsumer extends Agent {
                 MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
                 ACLMessage msg = receive(messageType);
                 if (msg != null) {
-                    String content = msg.getContent();
-                    String[] contentArray = content.split(" ");
-                    int quantity = Integer.parseInt(contentArray[1]);
-                    double price = Double.parseDouble(contentArray[2]);
-                    double totalPrice = price*quantity;
+                	countMessage ++;
+                	messageList.add(msg);
 
-                    if (quantity >= maxConsumedStock - currentConsumedProductStock) {
-                        quantity = maxConsumedStock - currentConsumedProductStock;
-                        totalPrice = price*quantity;
-                    }
-
-                    if (money < totalPrice || maxConsumedStock == currentConsumedProductStock) {
-                        System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send REJECT");
-                        ACLMessage reply = msg.createReply();
-                        reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
-                        send(reply);
-                    } else {
-                        System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send ACCEPT");
-                        ACLMessage reply = msg.createReply();
-                        reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-                        reply.setContent(String.valueOf(quantity));
-                        send(reply);
-
-                        money -= totalPrice;
-                        currentConsumedProductStock += quantity;
-                    }
+	                if(nbAgent >= countMessage) {
+	                	ACLMessage bestProposal = new ACLMessage();
+	                    double bestOffer = 9999;
+	                    int bestQuantity = 0;
+	                	for(ACLMessage message : messageList) {
+		                	String content = message.getContent();
+		                    String[] contentArray = content.split(" ");
+		                    int quantity = Integer.parseInt(contentArray[1]);
+		                    double price = Double.parseDouble(contentArray[2]);
+		                    double totalPrice = price*quantity;
+		                    
+		                    if (quantity >= maxConsumedStock - currentConsumedProductStock) {
+		                        quantity = maxConsumedStock - currentConsumedProductStock;
+		                        totalPrice = price*quantity;
+		                    }
+		                    if (money > totalPrice && maxConsumedStock != currentConsumedProductStock) {
+		                    	
+		                    	if(price<bestOffer) {
+		                    		bestProposal = message;
+		                    		bestOffer = price;
+		                    		bestQuantity = quantity;
+			                    }
+		                    }
+	                	}
+	                	for(ACLMessage message : messageList){
+	                		if(message.equals(bestProposal)) {
+		                		System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send ACCEPT");
+		                        ACLMessage reply = bestProposal.createReply();
+		                        reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+		                        reply.setContent(String.valueOf(bestQuantity));
+		                        send(reply);
+		
+		                        money -= bestQuantity*bestOffer;
+		                        currentConsumedProductStock += bestQuantity;
+	                		}
+	                		else {
+	                			System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send REJECT");
+		                        ACLMessage reply = msg.createReply();
+		                        reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
+		                        send(reply);
+	                		}
+	                	}
+	                	countMessage = 0;
+	                	messageList.clear();
+                	}
+	                else {
+	                	System.err.println("Nb attendu : " + nbAgent + " Nb recu : " + countMessage);
+	                }
                 }
             }
         });
@@ -248,12 +320,22 @@ public class ProducerConsumer extends Agent {
             public void action() {
                 if (satisfaction < 0.2) {
                     System.out.println("\tDEBUG: Died Satisfaction - " + myAgent.getLocalName());
+                    try {
+						DFService.deregister(myAgent);
+					} catch (FIPAException e) {
+						e.printStackTrace();
+					}
                     doDelete();
                 }
                 MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
                 ACLMessage msg = receive(messageType);
                 if (msg != null) {
                     System.out.println("\tDEBUG: End simulation - " + myAgent.getLocalName());
+                    try {
+						DFService.deregister(myAgent);
+					} catch (FIPAException e) {
+						e.printStackTrace();
+					}
                     doDelete();
                 }
             }
