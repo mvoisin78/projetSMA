@@ -63,67 +63,96 @@ public class ProducerConsumer extends Agent {
                 e.printStackTrace();
             }
         }
-        System.out.println("\tDEBUG: setup - " + this.getLocalName() + " params: " + producedProduct + "/" + consumedProduct + "/" + productionSpeed + "/" + consumptionSpeed);
+        System.out.println("setup - " + this.getLocalName() + " params: " + producedProduct + "/" + consumedProduct + "/" + productionSpeed + "/" + consumptionSpeed);
 
         
-        DFAgentDescription dfd = new DFAgentDescription();
-        dfd.setName(getAID());
+        register();
         
-        ServiceDescription sd = new ServiceDescription();
-        sd.setType(producedProduct);
-        sd.setName(getLocalName());
-        dfd.addServices(sd);
-        try {
-        	DFService.register(this,dfd);
-        }catch(FIPAException fe) {
-        	fe.printStackTrace();
-        }
+        searchBehaviour();
         
-        addBehaviour(new CyclicBehaviour(this) {
-            /**
-             * Behaviour to search agents
-             *
-             * Put all agents who sends the good product in a list
-             */
-            @Override
-            public void action() {
-            	MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE);
-                ACLMessage msg = receive(messageType);
-	            if (msg != null) {
-	                DFAgentDescription template = new DFAgentDescription();
-	                ServiceDescription sd = new ServiceDescription();
-	                sd.setType(consumedProduct);
-	                template.addServices(sd);
-	                try {
-	                	DFAgentDescription[] result = DFService.search(myAgent, template);
-	                	agents = new AID[result.length];
-	                	for(int i=0; i<result.length; i++) {
-	                		agents[i] = result[i].getName();
-	                	}
-	                } catch(FIPAException fe) {
-	                	fe.printStackTrace();
-	                }
-	                nbAgent = agents.length;
-	                System.err.println("RECHERCHE EFFECTUEE " + nbAgent);
-	            }
-            }
-        });
+        CFPBehaviour();
         
-        addBehaviour(new CyclicBehaviour(this) {
-            /**
-             * Behaviour to handle buying - Call For Proposal
-             *
-             * Get all agents.
-             * Send call for proposal message if there is still money and space in the stock.
-             */
+        responseBehaviour();
+
+        proposeBehaviour();
+
+        confirmBehaviour();
+
+        consumeBehaviour();
+
+        produceBehaviour();
+
+        endBehaviour();
+    }
+    
+    /**
+     * Register agent into the DFService
+     */
+    private void register() {
+    	 DFAgentDescription dfd = new DFAgentDescription();
+         dfd.setName(getAID());
+         
+         ServiceDescription sd = new ServiceDescription();
+         sd.setType(producedProduct);
+         sd.setName(getLocalName());
+         dfd.addServices(sd);
+         try {
+         	DFService.register(this,dfd);
+         }catch(FIPAException fe) {
+         	fe.printStackTrace();
+         }
+    }
+    
+    /**
+     * Add Behaviour to search agents
+     *
+     * Put all agents who sends the good product in a list
+     */
+    private void searchBehaviour() {
+    	 addBehaviour(new CyclicBehaviour(this) {
+            
+             @Override
+             public void action() {
+             	MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE);
+                 ACLMessage msg = receive(messageType);
+ 	            if (msg != null) {
+ 	                DFAgentDescription template = new DFAgentDescription();
+ 	                ServiceDescription sd = new ServiceDescription();
+ 	                sd.setType(consumedProduct);
+ 	                template.addServices(sd);
+ 	                try {
+ 	                	DFAgentDescription[] result = DFService.search(myAgent, template);
+ 	                	agents = new AID[result.length];
+ 	                	for(int i=0; i<result.length; i++) {
+ 	                		agents[i] = result[i].getName();
+ 	                	}
+ 	                } catch(FIPAException fe) {
+ 	                	fe.printStackTrace();
+ 	                }
+ 	                nbAgent = agents.length;
+ 	                System.err.println("RECHERCHE EFFECTUEE " + nbAgent);
+ 	            }
+             }
+         });
+    }
+
+    /**
+     * Add Behaviour to handle buying - Call For Proposal
+     *
+     * Get all agents.
+     * Send call for proposal message if there is still money and space in the stock.
+     */
+    private void CFPBehaviour() {
+    	addBehaviour(new CyclicBehaviour(this) {
+            
             @Override
             public void action() {
                if(agents != null) {
 	                if (money <= 0 || maxConsumedStock == currentConsumedProductStock) {
-	                    System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " money=0 or maxStock");
+	                    System.out.println("Buy - " + myAgent.getLocalName() + " money=0 or maxStock");
 	                    block();
 	                } else {
-	                    System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send CFP");
+	                    System.out.println("Buy - " + myAgent.getLocalName() + " send CFP");
 	                    ACLMessage msg = new ACLMessage(ACLMessage.CFP);
 	                    msg.setContent(consumedProduct);
 	                    for (AID agent : agents) {
@@ -134,14 +163,17 @@ public class ProducerConsumer extends Agent {
                }
             }
         });
-
-        addBehaviour(new CyclicBehaviour(this) {
-            /**
-             * Behaviour to handle buying - Accept or Reject Proposal
-             *
-             * Send the accept proposal or reject proposal message on receipt of the propose message.
-             * TODO
-             */
+    }
+    
+    /**
+     * Add Behaviour to handle buying - Accept or Reject Proposal
+     *
+     * Send the accept proposal or reject proposal message on receipt of the propose message.
+     * TODO
+     */
+    private void responseBehaviour() {
+    	addBehaviour(new CyclicBehaviour(this) {
+           
             @Override
             public void action() {
                 MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.PROPOSE);
@@ -176,7 +208,7 @@ public class ProducerConsumer extends Agent {
 	                	}
 	                	for(ACLMessage message : messageList){
 	                		if(message.equals(bestProposal)) {
-		                		System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send ACCEPT");
+		                		System.out.println("Buy - " + myAgent.getLocalName() + " send ACCEPT");
 		                        ACLMessage reply = bestProposal.createReply();
 		                        reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
 		                        reply.setContent(String.valueOf(bestQuantity));
@@ -186,7 +218,7 @@ public class ProducerConsumer extends Agent {
 		                        currentConsumedProductStock += bestQuantity;
 	                		}
 	                		else {
-	                			System.out.println("\tDEBUG: Buy - " + myAgent.getLocalName() + " send REJECT");
+	                			System.out.println("Buy - " + myAgent.getLocalName() + " send REJECT");
 		                        ACLMessage reply = msg.createReply();
 		                        reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
 		                        send(reply);
@@ -201,28 +233,30 @@ public class ProducerConsumer extends Agent {
                 }
             }
         });
-
-        addBehaviour(new CyclicBehaviour(this) {
-            /**
-             * Behaviour to handle selling - Propose
-             *
-             * Send the propose message on receipt of the call for proposal message, if the require product if the produced product.
-             * Manage pricing changes according to money and satisfaction.
-             */
+    }
+    
+    /**
+     * Add Behaviour to handle selling - Propose
+     *
+     * Send the propose message on receipt of the call for proposal message, if the require product if the produced product.
+     * Manage pricing changes according to money and satisfaction.
+     */
+    private void proposeBehaviour() {
+    	addBehaviour(new CyclicBehaviour(this) {
             @Override
             public void action() {
                 if (satisfaction <= 0.5 && money <= 0) {
-                    System.out.println("\tDEBUG: Sell - " + myAgent.getLocalName() + " decrease price");
+                    System.out.println("Sell - " + myAgent.getLocalName() + " decrease price");
                     currentProducedProductPrice -= 0.1;
                 } else if (satisfaction > 0.5 && money > 0) {
-                    System.out.println("\tDEBUG: Sell - " + myAgent.getLocalName() + " increase price");
+                    System.out.println("Sell - " + myAgent.getLocalName() + " increase price");
                     currentProducedProductPrice += 0.1;
                 }
 
                 MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.CFP);
                 ACLMessage msg = receive(messageType);
                 if (msg != null && msg.getContent().equals(producedProduct)) {
-                    System.out.println("\tDEBUG: Sell - " + myAgent.getLocalName() + " send PROPOSE");
+                    System.out.println("Sell - " + myAgent.getLocalName() + " send PROPOSE");
                     ACLMessage reply = msg.createReply();
                     reply.setPerformative(ACLMessage.PROPOSE);
                     reply.setContent(producedProduct + " " + currentProducedProductStock + " " + currentProducedProductPrice);
@@ -230,19 +264,22 @@ public class ProducerConsumer extends Agent {
                 }
             }
         });
-
-        addBehaviour(new CyclicBehaviour(this) {
-            /**
-             * Behaviour to handle selling - Confirm
-             *
-             * Send the confirm message on receipt of the accept proposal message.
-             */
+    }
+    
+    /**
+     * Add Behaviour to handle selling - Confirm
+     *
+     * Send the confirm message on receipt of the accept proposal message.
+     */
+    private void confirmBehaviour() {
+    	addBehaviour(new CyclicBehaviour(this) {
+            
             @Override
             public void action() {
                 MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
                 ACLMessage msg = receive(messageType);
                 if (msg != null) {
-                    System.out.println("\tDEBUG: Sell - " + myAgent.getLocalName() + " send CONFIRM");
+                    System.out.println("Sell - " + myAgent.getLocalName() + " send CONFIRM");
 
                     String content = msg.getContent();
                     int quantity = Integer.parseInt(content);
@@ -256,19 +293,22 @@ public class ProducerConsumer extends Agent {
                 }
             }
         });
-
-        addBehaviour(new CyclicBehaviour(this) {
-            /**
-             * Behaviour to handle consumption
-             *
-             * Consume the product if there still stock.
-             * Manage satisfaction according to the stock.
-             */
+    }
+    
+    /**
+     * Add Behaviour to handle consumption
+     *
+     * Consume the product if there still stock.
+     * Manage satisfaction according to the stock.
+     */
+    private void consumeBehaviour() {
+    	addBehaviour(new CyclicBehaviour(this) {
+            
             @Override
             public void action() {
                 if (currentConsumedProductStock > 0) {
                     if (satisfaction != 1) {
-                        System.out.println("\tDEBUG: Consume - " + myAgent.getLocalName() + " satisfaction=1");
+                        System.out.println("Consume - " + myAgent.getLocalName() + " satisfaction=1");
                         satisfaction = 1;
                         averageSatisfaction += satisfaction;
                         satisfactionCount++;
@@ -276,12 +316,12 @@ public class ProducerConsumer extends Agent {
                     }
 
                     if (((System.currentTimeMillis()/1000) - startTime) % consumptionSpeed == 0) {
-                        System.out.println("\tDEBUG: Consume - " + myAgent.getLocalName() + " consume");
+                        System.out.println("Consume - " + myAgent.getLocalName() + " consume");
                         currentConsumedProductStock--;
                     }
                 }
                 if (currentConsumedProductStock <= 0) {
-                    System.out.println("\tDEBUG: Consume - " + myAgent.getLocalName() + " satisfaction decrease");
+                    System.out.println("Consume - " + myAgent.getLocalName() + " satisfaction decrease");
                     satisfaction = Math.exp(-0.1*averageSatisfactionCount);
                     averageSatisfaction += satisfaction;
                     satisfactionCount++;
@@ -289,37 +329,43 @@ public class ProducerConsumer extends Agent {
                 }
             }
         });
-
-        addBehaviour(new CyclicBehaviour(this) {
-            /**
-             * Behaviour to handle production
-             *
-             * Produce the product if there is still place in the stock.
-             */
+    }
+    
+    /**
+     * Add Behaviour to handle production
+     *
+     * Produce the product if there is still place in the stock.
+     */
+    private void produceBehaviour() {
+    	addBehaviour(new CyclicBehaviour(this) {
+            
             @Override
             public void action() {
                 if (maxProducedStock == currentProducedProductStock) {
-                    System.out.println("\tDEBUG: Produce - " + myAgent.getLocalName() + " maximum stock");
+                    System.out.println("Produce - " + myAgent.getLocalName() + " maximum stock");
                     block();
                 } else {
                     if (((System.currentTimeMillis()/1000) - startTime) % productionSpeed == 0) {
-                        System.out.println("\tDEBUG: Produce - " + myAgent.getLocalName() + " produce");
+                        System.out.println("Produce - " + myAgent.getLocalName() + " produce");
                         currentProducedProductStock++;
                     }
                 }
             }
         });
-
-        addBehaviour(new CyclicBehaviour(this) {
-            /**
-             * Behaviour to handle end of simulation and die
-             *
-             * Died if satisfaction is under 0.2 or if it receives end simulation message.
-             */
+    }
+    
+    /**
+     * Add Behaviour to handle end of simulation and die
+     *
+     * Died if satisfaction is under 0.2 or if it receives end simulation message.
+     */
+    private void endBehaviour() {
+    	addBehaviour(new CyclicBehaviour(this) {
+            
             @Override
             public void action() {
                 if (satisfaction < 0.2) {
-                    System.out.println("\tDEBUG: Died Satisfaction - " + myAgent.getLocalName());
+                    System.out.println("Died Satisfaction - " + myAgent.getLocalName());
                     try {
 						DFService.deregister(myAgent);
 					} catch (FIPAException e) {
@@ -330,7 +376,7 @@ public class ProducerConsumer extends Agent {
                 MessageTemplate messageType = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
                 ACLMessage msg = receive(messageType);
                 if (msg != null) {
-                    System.out.println("\tDEBUG: End simulation - " + myAgent.getLocalName());
+                    System.out.println("End simulation - " + myAgent.getLocalName());
                     try {
 						DFService.deregister(myAgent);
 					} catch (FIPAException e) {
@@ -341,7 +387,7 @@ public class ProducerConsumer extends Agent {
             }
         });
     }
-
+    
     /**
      * Method called when Agent is killed to print information
      */
